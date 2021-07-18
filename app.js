@@ -24,12 +24,24 @@ const getCharMapFromWord = (word) => {
   return map;
 }
 
+const getMapStringFromCharMap = (charMap) => {
+  const orderedCharMap = Object.keys(charMap).sort().reduce(
+    (obj, key) => {
+      obj[key] = charMap[key];
+      return obj;
+    },
+    {}
+  );
+
+  return JSON.stringify(orderedCharMap);
+}
+
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
 app.get('/getPuzzle', (req, res) => {
-  
+
   function makeRandomString(length) {
     var result = '';
     var charactersLength = characters.length;
@@ -41,17 +53,68 @@ app.get('/getPuzzle', (req, res) => {
   }
 })
 
-app.get('/getMaps', (req, res) => {
-  
-  // create map from words to character counts
-  const words = fs.readFileSync('/usr/share/dict/words', { encoding: 'utf8' });
-  const foundWords = words.split('\n').length;
+app.get('/getMaps/:word', (req, res) => {
+
+  fs.readFile('./anagramMap2.txt', (err, data) => {
+
+    if (err) {
+
+      // // create map from words to character counts
+      // const words = fs.readFileSync('/usr/share/dict/words', { encoding: 'utf8' });
+      // const foundWords = words.split('\n');
+
+      // const wordMap = {};
+
+      // for (word of foundWords) {
+      //   const charMap = getCharMapFromWord(word);
+      //   const hash = getMapStringFromCharMap(charMap);
+
+      //   if (wordMap[hash]) {
+      //     wordMap[hash].push(word);
+      //   } else {
+      //     wordMap[hash] = [word];
+      //   }
+      // }
+
+      // const wordMapData = JSON.stringify(wordMap);
+
+      // // save the map to disk to load later
+      // fs.writeFile('./anagramMap.txt', wordMapData, (err) => {
+      //   if (err) {
+      //     console.log(err);
+      //   }
+      // });
+
+      res.send(JSON.stringify({
+        message: "No hash map found. Please try again later."
+      }))
+    } else {
+
+      const wordMap = JSON.parse(data.toString());
+      
+      const desiredWord = req.params.word;
+      
+      console.log("desiredWord: ", desiredWord)
+      
+      const charMap = getCharMapFromWord(desiredWord);
+      const hash = getMapStringFromCharMap(charMap);
+      const solutions = wordMap[hash] || [];
+      
+      console.log("solutions: ", solutions);
+      
+      res.send(JSON.stringify({
+        solutions
+      }));
+    }
+    
+  })
 })
 
 app.get('/getMapForWord/:word', (req, res) => {
-  
+
   const word = req.params.word;
-  console.log(getCharMapFromWord(word));
+  const charMap = getCharMapFromWord(word);
+  const hash = getMapStringFromCharMap(charMap);
 
 })
 
